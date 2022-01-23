@@ -1,4 +1,4 @@
-package com.im.xshots.ui.search
+package com.im.xshots.ui
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
