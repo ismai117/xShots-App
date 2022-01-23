@@ -1,4 +1,4 @@
-package com.im.xshots.ui
+package com.im.xshots.ui.viewmodel
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
