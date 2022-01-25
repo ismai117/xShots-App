@@ -9,6 +9,7 @@ import com.im.xshots.model.images.Images
 import com.im.xshots.repository.Repository
 import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -30,10 +31,16 @@ constructor(
 
     val query = mutableStateOf("")
 
+    val loading = mutableStateOf(false)
 
     fun searchImage(query: String) {
 
         viewModelScope.launch {
+
+            loading.value = true
+
+
+
             val response = repository.getImages(
                 host = host,
                 key = key,
@@ -46,6 +53,7 @@ constructor(
 
             images.value = response
 
+            loading.value = false
         }
     }
 
