@@ -1,14 +1,12 @@
 package com.im.xshots.ui
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +29,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -40,16 +41,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.im.xshots.R
 import com.im.xshots.model.images.DownloadedImages
-import com.im.xshots.model.images.Images
 import com.im.xshots.ui.components.*
 
 import com.im.xshots.ui.theme.Fonts
 import com.im.xshots.ui.util.NetworkState
 import com.im.xshots.ui.util.Screen
+import com.im.xshots.ui.viewmodel.DownloadedViewModel
 import com.im.xshots.ui.viewmodel.ImagesViewModel
+
 import com.im.xshots.ui.viewmodel.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -57,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     private val searchModel: SearchViewModel by viewModels()
     private val imagesViewModel: ImagesViewModel by viewModels()
+    private val downloadedViewModel: DownloadedViewModel by viewModels()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +74,7 @@ class MainActivity : ComponentActivity() {
 
             MaterialTheme {
                 Surface(color = MaterialTheme.colors.background) {
-                    Navigation()
+                    Navigation(searchModel, imagesViewModel, downloadedViewModel)
                 }
             }
 
@@ -82,7 +86,11 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
-    fun Navigation() {
+    fun Navigation(
+        searchModel: SearchViewModel,
+        imagesViewModel: ImagesViewModel,
+        downloadedViewModel: DownloadedViewModel,
+    ) {
 
         val navController = rememberNavController()
         val scaffoldState = rememberScaffoldState()
@@ -94,7 +102,8 @@ class MainActivity : ComponentActivity() {
             startDestination = Screen.SearchScreen.route
         ) {
             composable(route = Screen.SearchScreen.route) {
-                SearchScreen(navController = navController, scaffoldState, scope, searchModel)
+                SearchScreen(navController = navController, scaffoldState, scope,
+                    searchModel)
             }
             composable(
                 route = Screen.ImageScreen.route + "/{image}",
@@ -104,10 +113,11 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     scaffoldState = scaffoldState,
                     backStackEntry.arguments?.getString("image"),
-                imagesViewModel)
+                    imagesViewModel)
             }
-            composable(route = Screen.DownloadedScreen.route){
-                DownloadedScreen(navController, scaffoldState, scope, imagesViewModel)
+            composable(route = Screen.DownloadedScreen.route) {
+                DownloadedScreen(navController, scaffoldState, scope,
+                    downloadedViewModel)
             }
         }
 
@@ -192,7 +202,7 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.padding(16.dp))
 
-                when(images){
+                when (images) {
 
                     is NetworkState.Success -> {
 
@@ -207,7 +217,9 @@ class MainActivity : ComponentActivity() {
 
                     is NetworkState.Error -> {
 
-                            Toast.makeText(this@MainActivity,"${images.error?.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity,
+                            "${images.error?.message}",
+                            Toast.LENGTH_LONG).show()
 
                     }
 
@@ -218,8 +230,8 @@ class MainActivity : ComponentActivity() {
                     }
 
 
+                    else -> {}
                 }
-
 
 
             }
@@ -234,7 +246,7 @@ class MainActivity : ComponentActivity() {
         navController: NavController,
         scaffoldState: ScaffoldState,
         url: String?,
-        imagesViewModel: ImagesViewModel
+        imagesViewModel: ImagesViewModel,
     ) {
 
         Box(
@@ -284,7 +296,7 @@ class MainActivity : ComponentActivity() {
                 }
             },
             actions = {
-                TopBarMenu(url, this@MainActivity, navController = navController){
+                TopBarMenu(url, this@MainActivity, navController = navController) {
                     val imageDownloaded = DownloadedImages(url)
                     imagesViewModel.insertDownloadedImages(imageDownloaded)
                 }
@@ -302,14 +314,77 @@ class MainActivity : ComponentActivity() {
         navController: NavHostController,
         scaffoldState: ScaffoldState,
         scope: CoroutineScope,
-        imagesViewModel: ImagesViewModel
+        downloadedViewModel: DownloadedViewModel,
     ) {
+
+        val downloadedImages = downloadedViewModel.downloadImages.value
+
+
+        when (downloadedImages) {
+
+
+            is NetworkState.Success -> {
+
+                downloadedImages.data?.let {
+
+                    DownloadedImagesGrid(it)
+
+                }
+
+            }
+
+            is NetworkState.Error -> {
+
+                Toast.makeText(this@MainActivity,
+                    "${downloadedImages.error?.message}",
+                    Toast.LENGTH_LONG).show()
+
+            }
+
+            is NetworkState.Loading -> {
+
+                ProgressBar(isDisplayed = true)
+
+            }
+
+            else -> {}
+        }
 
 
     }
 
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun DownloadedImagesGrid(images: List<DownloadedImages>) {
 
+        LazyVerticalGrid(
+            cells = GridCells.Fixed(3),
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            items(images) { item ->
+                Card(
+                    modifier = Modifier.padding(4.dp),
+                    backgroundColor = Color.LightGray
+                ) {
+                    val image = item.url?.let { ImageLoader(uri = it, resource = 0, context = this@MainActivity).value }
+                    image?.let {
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = "",
+                            modifier = Modifier.size(150.dp),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
 
+                }
+            }
+
+        }
+
+    }
 
 }
+
+
+
 
