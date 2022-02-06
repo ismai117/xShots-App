@@ -6,4 +6,6 @@ sealed class Screen(val route: String){
 
     object ImageScreen : Screen("image_screen")
 
+    object DownloadedScreen : Screen("downloaded_screen")
+
 }
