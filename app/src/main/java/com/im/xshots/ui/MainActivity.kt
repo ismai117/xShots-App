@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,9 +30,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -52,7 +50,6 @@ import com.im.xshots.ui.viewmodel.ImagesViewModel
 import com.im.xshots.ui.viewmodel.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -144,6 +141,7 @@ class MainActivity : ComponentActivity() {
         ) {
             Column {
 
+
                 Column(
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -179,7 +177,7 @@ class MainActivity : ComponentActivity() {
                             if (query != "") {
                                 searchModel.searchImage(query = query)
                                 scope.launch {
-                                    listState.animateScrollToItem(index = 0)
+                                    listState.scrollToItem(0)
                                 }
                             } else {
                                 scope.launch {
@@ -208,8 +206,8 @@ class MainActivity : ComponentActivity() {
 
                         images.data?.let { it ->
                             ImageList(navController = navController,
-                                listState = listState,
                                 images = it,
+                                listState,
                                 context = this@MainActivity)
                         }
 
@@ -232,6 +230,7 @@ class MainActivity : ComponentActivity() {
 
                     else -> {}
                 }
+
 
 
             }
@@ -288,7 +287,8 @@ class MainActivity : ComponentActivity() {
             },
             navigationIcon = {
                 IconButton(
-                    onClick = { navController.navigate(Screen.SearchScreen.route) }
+                    onClick = {
+                        navController.navigate(Screen.SearchScreen.route) }
                 ) {
                     Icon(Icons.Filled.ArrowBack,
                         "backIcon",

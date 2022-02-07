@@ -4,10 +4,7 @@ import android.content.Context
 import android.view.RoundedCorner
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.MaterialTheme
@@ -32,12 +29,13 @@ fun ImageCard(
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .height(440.dp)
             .clickable { onClick() }
             .padding(start = 22.dp, end = 22.dp),
         elevation = 8.dp,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         ) {
             val image = ImageLoader(uri = images.portrait,
                 resource = R.drawable.placeholder,
