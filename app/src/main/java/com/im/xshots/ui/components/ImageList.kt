@@ -39,7 +39,6 @@ fun ImageList(
             items = images
         ){ index, image ->
 
-
             ImageCard(
                 images = image,
                 onClick = {

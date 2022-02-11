@@ -1,9 +1,12 @@
 package com.im.xshots.ui.viewmodel
 
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.im.xshots.model.images.Images
@@ -38,6 +41,8 @@ constructor(
     val query = mutableStateOf("")
 
     val screenIsLoading = mutableStateOf(false)
+
+
 
     init {
         viewModelScope.launch {

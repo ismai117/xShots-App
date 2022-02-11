@@ -1,5 +1,7 @@
 package com.im.xshots.ui.viewmodel
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
@@ -16,10 +18,15 @@ constructor(
     val repository: Repository
 ) : ViewModel() {
 
+
+
     fun insertDownloadedImages(downloadedImages: DownloadedImages){
         viewModelScope.launch {
             repository.insertDownloadedImages(downloadedImages = downloadedImages)
         }
     }
+
+
+
 
 }

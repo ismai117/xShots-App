@@ -1,12 +1,25 @@
 package com.im.xshots.ui
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.DownloadManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.database.Cursor
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,9 +28,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,8 +41,12 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -37,6 +55,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.im.xshots.R
 import com.im.xshots.model.images.DownloadedImages
 import com.im.xshots.ui.components.*
@@ -50,7 +69,10 @@ import com.im.xshots.ui.viewmodel.ImagesViewModel
 import com.im.xshots.ui.viewmodel.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -92,6 +114,7 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         val scaffoldState = rememberScaffoldState()
         val scope = rememberCoroutineScope()
+        val lazyListState = rememberLazyListState()
 
 
         NavHost(
@@ -100,7 +123,7 @@ class MainActivity : ComponentActivity() {
         ) {
             composable(route = Screen.SearchScreen.route) {
                 SearchScreen(navController = navController, scaffoldState, scope,
-                    searchModel)
+                    searchModel, lazyListState)
             }
             composable(
                 route = Screen.ImageScreen.route + "/{image}",
@@ -114,7 +137,7 @@ class MainActivity : ComponentActivity() {
             }
             composable(route = Screen.DownloadedScreen.route) {
                 DownloadedScreen(navController, scaffoldState, scope,
-                    downloadedViewModel)
+                    downloadedViewModel, this@MainActivity)
             }
         }
 
@@ -128,19 +151,19 @@ class MainActivity : ComponentActivity() {
         scaffoldState: ScaffoldState,
         scope: CoroutineScope,
         searchModel: SearchViewModel,
+        listState: LazyListState,
     ) {
 
         val query = searchModel.query.value
         val images = searchModel.images.value
         val softKeyboardController = LocalSoftwareKeyboardController.current
 
-        val listState = rememberLazyListState()
+
 
         Scaffold(
             scaffoldState = scaffoldState,
         ) {
             Column {
-
 
                 Column(
                     modifier = Modifier.fillMaxWidth()
@@ -177,7 +200,7 @@ class MainActivity : ComponentActivity() {
                             if (query != "") {
                                 searchModel.searchImage(query = query)
                                 scope.launch {
-                                    listState.scrollToItem(0)
+                                    listState.scrollToItem(index = 0)
                                 }
                             } else {
                                 scope.launch {
@@ -232,7 +255,6 @@ class MainActivity : ComponentActivity() {
                 }
 
 
-
             }
 
         }
@@ -248,21 +270,29 @@ class MainActivity : ComponentActivity() {
         imagesViewModel: ImagesViewModel,
     ) {
 
+        Scaffold(
+            scaffoldState = scaffoldState
+        ) {
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            val image = url?.let {
+
+
+            val imageSelected = url?.let {
                 ImageLoader(uri = it,
                     resource = R.drawable.placeholder,
                     context = this@MainActivity).value
             }
-            image?.let {
-                Image(
-                    bitmap = it.asImageBitmap(),
-                    contentDescription = "",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+            imageSelected.let { selected ->
+                selected?.let { it ->
+                    Image(
+                        bitmap = it.asImageBitmap(),
+                        contentDescription = "",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
             Scaffold(
                 scaffoldState = scaffoldState,
@@ -273,6 +303,8 @@ class MainActivity : ComponentActivity() {
                 backgroundColor = Color.Transparent,
                 contentColor = Color.White
             ) {}
+        }
+
         }
 
     }
@@ -288,7 +320,8 @@ class MainActivity : ComponentActivity() {
             navigationIcon = {
                 IconButton(
                     onClick = {
-                        navController.navigate(Screen.SearchScreen.route) }
+                        navController.navigate(Screen.SearchScreen.route)
+                    }
                 ) {
                     Icon(Icons.Filled.ArrowBack,
                         "backIcon",
@@ -296,16 +329,219 @@ class MainActivity : ComponentActivity() {
                 }
             },
             actions = {
-                TopBarMenu(url, this@MainActivity, navController = navController) {
-                    val imageDownloaded = DownloadedImages(url)
-                    imagesViewModel.insertDownloadedImages(imageDownloaded)
-                }
+                url?.let { ShowMenu(navController, it) }
             },
             backgroundColor = Color.Transparent,
             modifier = Modifier.fillMaxWidth()
         )
 
 
+    }
+
+    private @Composable
+    fun ShowMenu(
+        navController: NavController,
+        url: String,
+    ) {
+
+        val expanded = remember { mutableStateOf(false) }
+        val save = remember { mutableStateOf(false) }
+
+        IconButton(
+            onClick = {
+                expanded.value = true
+            }
+        ) {
+            Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "")
+            DropdownMenu(
+                expanded = expanded.value,
+                onDismissRequest = { expanded.value = false },
+                modifier = Modifier.fillMaxWidth(0.75f),
+            ) {
+                DropdownMenuItem(
+                    onClick = {
+                        save.value = true
+                    }
+                ) {
+                    Text(text = "Save")
+                }
+                DropdownMenuItem(
+                    onClick = {
+                        navController.navigate(Screen.DownloadedScreen.route)
+                    }
+                ) {
+                    Text(text = "Downloaded")
+                }
+            }
+        }
+
+        if (save.value) {
+            SaveiMAGE(url)
+            save.value = false
+        }
+
+    }
+
+    @Composable
+    fun SaveiMAGE(url: String) {
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+        ) {
+            AskPermission(url)
+        } else {
+            DownloadImage(url)
+        }
+    }
+
+    @Composable
+    fun AskPermission(url: String) {
+        if (ContextCompat.checkSelfPermission(this@MainActivity,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this@MainActivity,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            ) {
+                ShowDialog(this)
+            } else {
+                ActivityCompat.requestPermissions(this@MainActivity,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    1)
+            }
+        } else {
+            DownloadImage(url = url)
+        }
+    }
+
+    @SuppressLint("Range")
+    @Composable
+    fun DownloadImage(url: String) {
+
+        val scope = rememberCoroutineScope()
+        val scaffoldState = rememberScaffoldState()
+        val lastMessage = remember { mutableStateOf("") }
+
+        val dir = File(Environment.DIRECTORY_PICTURES)
+
+        if(!dir.exists()){
+            dir.mkdirs()
+        }
+
+        val downloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+
+        val uri = Uri.parse(url)
+
+        val request = DownloadManager.Request(uri).apply {
+
+            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI)
+                .setAllowedOverRoaming(false)
+                .setTitle(url.substring(url.lastIndexOf("/") + 1))
+                .setDescription("")
+                .setDestinationInExternalPublicDir(
+                    dir.toString(),
+                    url.substring(url.lastIndexOf("/") + 1)
+                )
+
+        }
+
+
+        val downloadId = downloadManager.enqueue(request)
+
+        val query = DownloadManager.Query().setFilterById(downloadId)
+
+
+        Thread(Runnable {
+
+
+                var isDownloading = true
+
+                while (isDownloading){
+
+                    val cursor: Cursor = downloadManager.query(query)
+
+                    cursor.moveToFirst()
+
+                    if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
+                        isDownloading = false
+                    }
+
+                    val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+
+                    val message = statusMessages(status, dir, url)
+
+                    if (message != lastMessage.value){
+                        this.runOnUiThread{
+
+                            Log.d("download_status", "${message}")
+
+                            Toast.makeText(this, "$message",Toast.LENGTH_LONG).show()
+
+                            lastMessage.value = message ?: ""
+                        }
+                    }
+
+                    cursor.close()
+                }
+
+        }).start()
+
+        }
+
+
+    }
+
+     fun statusMessages(status: Int, dir: File, url: String): String {
+
+        val msg = mutableStateOf("")
+
+        when(status){
+
+            DownloadManager.STATUS_SUCCESSFUL -> {
+                msg.value = "Download status is successful"
+            }
+
+            DownloadManager.STATUS_RUNNING -> {
+                msg.value = "Download status is running"
+            }
+
+            DownloadManager.STATUS_PAUSED -> {
+                msg.value = "Download statis is paused"
+            }
+
+            DownloadManager.STATUS_PENDING -> {
+                msg.value = "Download status is pending"
+            }
+
+            DownloadManager.STATUS_FAILED -> {
+                msg.value = "Download status is failed"
+            }
+
+            else -> {
+               msg.value = "There's nothing to download"
+            }
+
+        }
+
+
+        return msg.value
+
+    }
+
+
+    @Composable
+    fun ShowDialog(context: Context) {
+        MaterialAlertDialogBuilder(context)
+            .setIcon(R.drawable.ic_folder)
+            .setMessage("Allow xShots to access photos, media and files on your device?")
+            .setNegativeButton("Deny") { dialog, which ->
+
+            }
+            .setPositiveButton("Allow") { dialog, which ->
+                ActivityCompat.requestPermissions(context as Activity,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    1)
+            }
+            .show()
     }
 
 
@@ -315,6 +551,7 @@ class MainActivity : ComponentActivity() {
         scaffoldState: ScaffoldState,
         scope: CoroutineScope,
         downloadedViewModel: DownloadedViewModel,
+        context: Context
     ) {
 
         val downloadedImages = downloadedViewModel.downloadImages.value
@@ -327,7 +564,9 @@ class MainActivity : ComponentActivity() {
 
                 downloadedImages.data?.let {
 
-                    DownloadedImagesGrid(it)
+                    DownloadScreenLayout(navController = navController,
+                        scaffoldState = scaffoldState,
+                        images = it, context)
 
                 }
 
@@ -335,7 +574,7 @@ class MainActivity : ComponentActivity() {
 
             is NetworkState.Error -> {
 
-                Toast.makeText(this@MainActivity,
+                Toast.makeText(context,
                     "${downloadedImages.error?.message}",
                     Toast.LENGTH_LONG).show()
 
@@ -353,25 +592,74 @@ class MainActivity : ComponentActivity() {
 
     }
 
+
+    @Composable
+    fun DownloadScreenLayout(
+        navController: NavHostController,
+        scaffoldState: ScaffoldState,
+        images: List<DownloadedImages>,
+        context: Context
+    ) {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            topBar = {
+                DownloadedTopBar(navController)
+            },
+            content = {
+                DownloadedImagesGrid(images = images, context)
+            }
+        )
+    }
+
+    @Composable
+    fun DownloadedTopBar(
+        navController: NavController,
+    ) {
+        TopAppBar(
+            title = {
+
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = {
+                        navController.navigate(Screen.ImageScreen.route + "/{image}")
+                    }
+                ) {
+                    Icon(Icons.Filled.ArrowBack,
+                        "backIcon",
+                        modifier = Modifier.size(30.dp))
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = Color.White
+        )
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun DownloadedImagesGrid(images: List<DownloadedImages>) {
+    fun DownloadedImagesGrid(images: List<DownloadedImages>, context: Context) {
 
         LazyVerticalGrid(
             cells = GridCells.Fixed(3),
-            contentPadding = PaddingValues(8.dp)
+            modifier = Modifier.padding(top = 1.dp, bottom = 1.dp)
         ) {
             items(images) { item ->
                 Card(
-                    modifier = Modifier.padding(4.dp),
+                    modifier = Modifier.padding(start = 1.dp, end = 1.dp),
                     backgroundColor = Color.LightGray
                 ) {
-                    val image = item.url?.let { ImageLoader(uri = it, resource = 0, context = this@MainActivity).value }
+                    val image = item.url?.let {
+                        ImageLoader(uri = it,
+                            resource = 0,
+                            context = context).value
+                    }
                     image?.let {
                         Image(
                             bitmap = it.asImageBitmap(),
                             contentDescription = "",
-                            modifier = Modifier.size(150.dp),
+                            modifier = Modifier
+                                .height(130.dp)
+                                .width(150.dp),
                             contentScale = ContentScale.Crop
                         )
                     }
@@ -381,10 +669,5 @@ class MainActivity : ComponentActivity() {
 
         }
 
-    }
 
 }
-
-
-
-
