@@ -329,7 +329,7 @@ class MainActivity : ComponentActivity() {
                 }
             },
             actions = {
-                url?.let { ShowMenu(navController, it) }
+                url?.let { ShowMenu(navController, it, imagesViewModel) }
             },
             backgroundColor = Color.Transparent,
             modifier = Modifier.fillMaxWidth()
@@ -342,6 +342,7 @@ class MainActivity : ComponentActivity() {
     fun ShowMenu(
         navController: NavController,
         url: String,
+        imagesViewModel: ImagesViewModel
     ) {
 
         val expanded = remember { mutableStateOf(false) }
@@ -376,26 +377,26 @@ class MainActivity : ComponentActivity() {
         }
 
         if (save.value) {
-            SaveiMAGE(url)
+            SaveiMAGE(url, imagesViewModel)
             save.value = false
         }
 
     }
 
     @Composable
-    fun SaveiMAGE(url: String) {
+    fun SaveiMAGE(url: String, imagesViewModel: ImagesViewModel) {
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
             Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
         ) {
-            AskPermission(url)
+            AskPermission(url, imagesViewModel)
         } else {
-            DownloadImage(url)
+            DownloadImage(url, imagesViewModel)
         }
     }
 
     @Composable
-    fun AskPermission(url: String) {
+    fun AskPermission(url: String, imagesViewModel: ImagesViewModel) {
         if (ContextCompat.checkSelfPermission(this@MainActivity,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -409,13 +410,13 @@ class MainActivity : ComponentActivity() {
                     1)
             }
         } else {
-            DownloadImage(url = url)
+            DownloadImage(url = url, imagesViewModel)
         }
     }
 
     @SuppressLint("Range")
     @Composable
-    fun DownloadImage(url: String) {
+    fun DownloadImage(url: String?, imagesViewModel: ImagesViewModel) {
 
         val scope = rememberCoroutineScope()
         val scaffoldState = rememberScaffoldState()
@@ -435,11 +436,11 @@ class MainActivity : ComponentActivity() {
 
             setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI)
                 .setAllowedOverRoaming(false)
-                .setTitle(url.substring(url.lastIndexOf("/") + 1))
+                .setTitle(url?.substring(url.lastIndexOf("/") + 1))
                 .setDescription("")
                 .setDestinationInExternalPublicDir(
                     dir.toString(),
-                    url.substring(url.lastIndexOf("/") + 1)
+                    url?.substring(url.lastIndexOf("/") + 1)
                 )
 
         }
@@ -463,11 +464,13 @@ class MainActivity : ComponentActivity() {
 
                     if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
                         isDownloading = false
+                        val insertDownloadedImage = DownloadedImages(url)
+                        imagesViewModel.insertDownloadedImages(insertDownloadedImage)
                     }
 
                     val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
 
-                    val message = statusMessages(status, dir, url)
+                    val message = url?.let { statusMessages(status, dir, it) }
 
                     if (message != lastMessage.value){
                         this.runOnUiThread{

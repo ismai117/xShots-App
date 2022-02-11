@@ -1,77 +1,79 @@
 package com.im.xshots.data.remote.images
 
-import com.google.gson.annotations.SerializedName
 
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class ImagesNetworkEntity(
 
     val photos: List<Photo> = listOf(),
 
     ) {
 
-
+    @JsonClass(generateAdapter = true)
     data class Photo(
 
-        @SerializedName(value = "alt")
+        @Json(name = "alt")
         val alt: String,
 
-        @SerializedName(value = "avg_color")
+        @Json(name = "avg_color")
         val avg_color: String,
 
-        @SerializedName(value = "height")
+        @Json(name = "height")
         val height: Int,
 
-        @SerializedName(value = "id")
+        @Json(name = "id")
         val id: Int,
 
-        @SerializedName(value = "liked")
+        @Json(name = "liked")
         val liked: Boolean,
 
-        @SerializedName(value = "photographer")
+        @Json(name = "photographer")
         val photographer: String,
 
-        @SerializedName(value = "photographer_id")
+        @Json(name = "photographer_id")
         val photographer_id: Int,
 
-        @SerializedName(value = "photographer_url")
+        @Json(name = "photographer_url")
         val photographer_url: String,
 
-        @SerializedName(value = "src")
+        @Json(name = "src")
         val src: Src,
 
-        @SerializedName(value = "url")
+        @Json(name = "url")
         val url: String,
 
-        @SerializedName(value = "width")
+        @Json(name = "width")
         val width: Int,
 
         )
 
-
+    @JsonClass(generateAdapter = true)
     data class Src(
 
-        @SerializedName(value = "landscape")
+        @Json(name = "landscape")
         val landscape: String,
 
-        @SerializedName(value = "large")
+        @Json(name = "large")
         val large: String,
 
-        @SerializedName(value = "large2x")
+        @Json(name = "large2x")
         val large2x: String,
 
-        @SerializedName(value = "medium")
+        @Json(name = "medium")
         val medium: String,
 
-        @SerializedName(value = "original")
+        @Json(name = "original")
         val original: String,
 
-        @SerializedName(value = "portrait")
+        @Json(name = "portrait")
         val portrait: String,
 
-        @SerializedName(value = "small")
+        @Json(name = "small")
         val small: String,
 
-        @SerializedName(value = "tiny")
+        @Json(name = "tiny")
         val tiny: String,
 
         )

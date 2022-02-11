@@ -1,8 +1,8 @@
 package com.im.xshots.di
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+
 import com.im.xshots.data.remote.service.ImagesService
+import com.squareup.moshi.Moshi
 
 import dagger.Module
 import dagger.Provides
@@ -11,7 +11,8 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+
+import retrofit2.converter.moshi.MoshiConverterFactory
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -23,7 +24,7 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideGson() = GsonBuilder().setLenient().create()
+    fun provideMoshi() = Moshi.Builder().build()
 
     @Singleton
     @Provides
@@ -43,10 +44,10 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://pexelsdimasv1.p.rapidapi.com/")
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(okHttpClient)
             .build()
     }
