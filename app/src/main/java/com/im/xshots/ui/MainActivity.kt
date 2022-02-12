@@ -18,8 +18,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,10 +38,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -63,13 +58,10 @@ import com.im.xshots.ui.components.*
 import com.im.xshots.ui.theme.Fonts
 import com.im.xshots.ui.util.NetworkState
 import com.im.xshots.ui.util.Screen
-import com.im.xshots.ui.viewmodel.DownloadedViewModel
-import com.im.xshots.ui.viewmodel.ImagesViewModel
 
 import com.im.xshots.ui.viewmodel.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -78,9 +70,6 @@ import java.io.File
 class MainActivity : ComponentActivity() {
 
     private val searchModel: SearchViewModel by viewModels()
-    private val imagesViewModel: ImagesViewModel by viewModels()
-    private val downloadedViewModel: DownloadedViewModel by viewModels()
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +82,7 @@ class MainActivity : ComponentActivity() {
 
             MaterialTheme {
                 Surface(color = MaterialTheme.colors.background) {
-                    Navigation(searchModel, imagesViewModel, downloadedViewModel)
+                    Navigation(searchModel, this)
                 }
             }
 
@@ -107,8 +96,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun Navigation(
         searchModel: SearchViewModel,
-        imagesViewModel: ImagesViewModel,
-        downloadedViewModel: DownloadedViewModel,
+        context: Context
     ) {
 
         val navController = rememberNavController()
@@ -123,7 +111,7 @@ class MainActivity : ComponentActivity() {
         ) {
             composable(route = Screen.SearchScreen.route) {
                 SearchScreen(navController = navController, scaffoldState, scope,
-                    searchModel, lazyListState)
+                    searchModel, lazyListState, context)
             }
             composable(
                 route = Screen.ImageScreen.route + "/{image}",
@@ -133,11 +121,7 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     scaffoldState = scaffoldState,
                     backStackEntry.arguments?.getString("image"),
-                    imagesViewModel)
-            }
-            composable(route = Screen.DownloadedScreen.route) {
-                DownloadedScreen(navController, scaffoldState, scope,
-                    downloadedViewModel, this@MainActivity)
+                context)
             }
         }
 
@@ -152,6 +136,7 @@ class MainActivity : ComponentActivity() {
         scope: CoroutineScope,
         searchModel: SearchViewModel,
         listState: LazyListState,
+        context: Context
     ) {
 
         val query = searchModel.query.value
@@ -231,14 +216,14 @@ class MainActivity : ComponentActivity() {
                             ImageList(navController = navController,
                                 images = it,
                                 listState,
-                                context = this@MainActivity)
+                                context = context)
                         }
 
                     }
 
                     is NetworkState.Error -> {
 
-                        Toast.makeText(this@MainActivity,
+                        Toast.makeText(context,
                             "${images.error?.message}",
                             Toast.LENGTH_LONG).show()
 
@@ -267,43 +252,43 @@ class MainActivity : ComponentActivity() {
         navController: NavController,
         scaffoldState: ScaffoldState,
         url: String?,
-        imagesViewModel: ImagesViewModel,
+        context: Context
     ) {
 
         Scaffold(
             scaffoldState = scaffoldState
         ) {
 
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
 
 
-            val imageSelected = url?.let {
-                ImageLoader(uri = it,
-                    resource = R.drawable.placeholder,
-                    context = this@MainActivity).value
-            }
-            imageSelected.let { selected ->
-                selected?.let { it ->
-                    Image(
-                        bitmap = it.asImageBitmap(),
-                        contentDescription = "",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
+                val imageSelected = url?.let {
+                    ImageLoader(uri = it,
+                        resource = R.drawable.placeholder,
+                        context = context).value
                 }
+                imageSelected.let { selected ->
+                    selected?.let { it ->
+                        Image(
+                            bitmap = it.asImageBitmap(),
+                            contentDescription = "",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+                Scaffold(
+                    scaffoldState = scaffoldState,
+                    topBar = {
+                        TopBar(navController = navController, url, context)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = Color.Transparent,
+                    contentColor = Color.White
+                ) {}
             }
-            Scaffold(
-                scaffoldState = scaffoldState,
-                topBar = {
-                    TopBar(navController = navController, url, imagesViewModel)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = Color.Transparent,
-                contentColor = Color.White
-            ) {}
-        }
 
         }
 
@@ -311,7 +296,7 @@ class MainActivity : ComponentActivity() {
 
 
     @Composable
-    fun TopBar(navController: NavController, url: String?, imagesViewModel: ImagesViewModel) {
+    fun TopBar(navController: NavController, url: String?, context: Context) {
 
         TopAppBar(
             title = {
@@ -329,7 +314,7 @@ class MainActivity : ComponentActivity() {
                 }
             },
             actions = {
-                url?.let { ShowMenu(navController, it, imagesViewModel) }
+                url?.let { ShowMenu(navController, it, context) }
             },
             backgroundColor = Color.Transparent,
             modifier = Modifier.fillMaxWidth()
@@ -342,7 +327,7 @@ class MainActivity : ComponentActivity() {
     fun ShowMenu(
         navController: NavController,
         url: String,
-        imagesViewModel: ImagesViewModel
+        context: Context
     ) {
 
         val expanded = remember { mutableStateOf(false) }
@@ -377,300 +362,58 @@ class MainActivity : ComponentActivity() {
         }
 
         if (save.value) {
-            SaveiMAGE(url, imagesViewModel)
+            SaveiMAGE(url, context)
             save.value = false
         }
 
     }
 
     @Composable
-    fun SaveiMAGE(url: String, imagesViewModel: ImagesViewModel) {
+    fun SaveiMAGE(url: String, context: Context) {
         if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
             Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
         ) {
-            AskPermission(url, imagesViewModel)
+            AskPermission(url, context)
         } else {
-            DownloadImage(url, imagesViewModel)
+            DownloadImage(url, context)
         }
     }
 
     @Composable
-    fun AskPermission(url: String, imagesViewModel: ImagesViewModel) {
-        if (ContextCompat.checkSelfPermission(this@MainActivity,
+    fun AskPermission(url: String, context: Context) {
+
+        if (ContextCompat.checkSelfPermission(context,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this@MainActivity,
+            if (ActivityCompat.shouldShowRequestPermissionRationale(context as Activity,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)
             ) {
-                ShowDialog(this)
+                showDialog(context = context)
             } else {
-                ActivityCompat.requestPermissions(this@MainActivity,
+                ActivityCompat.requestPermissions(context,
                     arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
                     1)
             }
         } else {
-            DownloadImage(url = url, imagesViewModel)
+            DownloadImage(url = url, context)
         }
+
     }
 
     @SuppressLint("Range")
     @Composable
-    fun DownloadImage(url: String?, imagesViewModel: ImagesViewModel) {
+    fun DownloadImage(url: String?,context: Context) {
 
-        val scope = rememberCoroutineScope()
-        val scaffoldState = rememberScaffoldState()
-        val lastMessage = remember { mutableStateOf("") }
-
-        val dir = File(Environment.DIRECTORY_PICTURES)
-
-        if(!dir.exists()){
-            dir.mkdirs()
-        }
-
-        val downloadManager = this.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-
-        val uri = Uri.parse(url)
-
-        val request = DownloadManager.Request(uri).apply {
-
-            setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI)
-                .setAllowedOverRoaming(false)
-                .setTitle(url?.substring(url.lastIndexOf("/") + 1))
-                .setDescription("")
-                .setDestinationInExternalPublicDir(
-                    dir.toString(),
-                    url?.substring(url.lastIndexOf("/") + 1)
-                )
-
-        }
-
-
-        val downloadId = downloadManager.enqueue(request)
-
-        val query = DownloadManager.Query().setFilterById(downloadId)
-
-
-        Thread(Runnable {
-
-
-                var isDownloading = true
-
-                while (isDownloading){
-
-                    val cursor: Cursor = downloadManager.query(query)
-
-                    cursor.moveToFirst()
-
-                    if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
-                        isDownloading = false
-                        val insertDownloadedImage = DownloadedImages(url)
-                        imagesViewModel.insertDownloadedImages(insertDownloadedImage)
-                    }
-
-                    val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-
-                    val message = url?.let { statusMessages(status, dir, it) }
-
-                    if (message != lastMessage.value){
-                        this.runOnUiThread{
-
-                            Log.d("download_status", "${message}")
-
-                            Toast.makeText(this, "$message",Toast.LENGTH_LONG).show()
-
-                            lastMessage.value = message ?: ""
-                        }
-                    }
-
-                    cursor.close()
-                }
-
-        }).start()
-
-        }
-
+        download(url, context)
 
     }
-
-     fun statusMessages(status: Int, dir: File, url: String): String {
-
-        val msg = mutableStateOf("")
-
-        when(status){
-
-            DownloadManager.STATUS_SUCCESSFUL -> {
-                msg.value = "Download status is successful"
-            }
-
-            DownloadManager.STATUS_RUNNING -> {
-                msg.value = "Download status is running"
-            }
-
-            DownloadManager.STATUS_PAUSED -> {
-                msg.value = "Download statis is paused"
-            }
-
-            DownloadManager.STATUS_PENDING -> {
-                msg.value = "Download status is pending"
-            }
-
-            DownloadManager.STATUS_FAILED -> {
-                msg.value = "Download status is failed"
-            }
-
-            else -> {
-               msg.value = "There's nothing to download"
-            }
-
-        }
-
-
-        return msg.value
-
-    }
-
-
-    @Composable
-    fun ShowDialog(context: Context) {
-        MaterialAlertDialogBuilder(context)
-            .setIcon(R.drawable.ic_folder)
-            .setMessage("Allow xShots to access photos, media and files on your device?")
-            .setNegativeButton("Deny") { dialog, which ->
-
-            }
-            .setPositiveButton("Allow") { dialog, which ->
-                ActivityCompat.requestPermissions(context as Activity,
-                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                    1)
-            }
-            .show()
-    }
-
-
-    @Composable
-    fun DownloadedScreen(
-        navController: NavHostController,
-        scaffoldState: ScaffoldState,
-        scope: CoroutineScope,
-        downloadedViewModel: DownloadedViewModel,
-        context: Context
-    ) {
-
-        val downloadedImages = downloadedViewModel.downloadImages.value
-
-
-        when (downloadedImages) {
-
-
-            is NetworkState.Success -> {
-
-                downloadedImages.data?.let {
-
-                    DownloadScreenLayout(navController = navController,
-                        scaffoldState = scaffoldState,
-                        images = it, context)
-
-                }
-
-            }
-
-            is NetworkState.Error -> {
-
-                Toast.makeText(context,
-                    "${downloadedImages.error?.message}",
-                    Toast.LENGTH_LONG).show()
-
-            }
-
-            is NetworkState.Loading -> {
-
-                ProgressBar(isDisplayed = true)
-
-            }
-
-            else -> {}
-        }
-
-
-    }
-
-
-    @Composable
-    fun DownloadScreenLayout(
-        navController: NavHostController,
-        scaffoldState: ScaffoldState,
-        images: List<DownloadedImages>,
-        context: Context
-    ) {
-        Scaffold(
-            scaffoldState = scaffoldState,
-            topBar = {
-                DownloadedTopBar(navController)
-            },
-            content = {
-                DownloadedImagesGrid(images = images, context)
-            }
-        )
-    }
-
-    @Composable
-    fun DownloadedTopBar(
-        navController: NavController,
-    ) {
-        TopAppBar(
-            title = {
-
-            },
-            navigationIcon = {
-                IconButton(
-                    onClick = {
-                        navController.navigate(Screen.ImageScreen.route + "/{image}")
-                    }
-                ) {
-                    Icon(Icons.Filled.ArrowBack,
-                        "backIcon",
-                        modifier = Modifier.size(30.dp))
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = Color.White
-        )
-    }
-
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun DownloadedImagesGrid(images: List<DownloadedImages>, context: Context) {
-
-        LazyVerticalGrid(
-            cells = GridCells.Fixed(3),
-            modifier = Modifier.padding(top = 1.dp, bottom = 1.dp)
-        ) {
-            items(images) { item ->
-                Card(
-                    modifier = Modifier.padding(start = 1.dp, end = 1.dp),
-                    backgroundColor = Color.LightGray
-                ) {
-                    val image = item.url?.let {
-                        ImageLoader(uri = it,
-                            resource = 0,
-                            context = context).value
-                    }
-                    image?.let {
-                        Image(
-                            bitmap = it.asImageBitmap(),
-                            contentDescription = "",
-                            modifier = Modifier
-                                .height(130.dp)
-                                .width(150.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-
-                }
-            }
-
-        }
 
 
 }
+
+
+
+
+
+

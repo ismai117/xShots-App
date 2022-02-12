@@ -1,6 +1,6 @@
 package com.im.xshots.di
 
-import com.im.xshots.data.local.util.ImagesCacheMapper
+
 import com.im.xshots.data.remote.util.ImagesResponseMapper
 import dagger.Module
 import dagger.Provides
@@ -19,10 +19,6 @@ object InteractorsModule {
         return ImagesResponseMapper()
     }
 
-    @Singleton
-    @Provides
-    fun provideImagesCacheMapper(): ImagesCacheMapper {
-        return ImagesCacheMapper()
-    }
+
 
 }
