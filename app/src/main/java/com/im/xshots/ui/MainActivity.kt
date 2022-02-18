@@ -583,8 +583,6 @@ class MainActivity : ComponentActivity() {
 
             Log.d("videoLink", "$url")
 
-            VideoPlayer(url, context)
-
             Scaffold(
                 scaffoldState = scaffoldState,
                 topBar = {
@@ -592,7 +590,9 @@ class MainActivity : ComponentActivity() {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = Color.Transparent
-            ) {}
+            ) {
+                VideoPlayer(url, context)
+            }
 
         }
 
@@ -666,7 +666,6 @@ class MainActivity : ComponentActivity() {
             )
         ) {
             onDispose {
-                // relase player when no longer needed
                 exoPlayer.release()
             }
         }
