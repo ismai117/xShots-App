@@ -1,11 +1,15 @@
 package com.im.xshots.ui.util
 
-sealed class Screen(val route: String){
+import com.im.xshots.R
 
-    object SearchScreen : Screen("search_screen")
+sealed class Screen(val title: String, val icon: Int, val route: String){
 
-    object ImageScreen : Screen("image_screen")
+    object PhotosScreen : Screen("Photos", R.drawable.ic_pictures,"photos_screen")
 
-    object DownloadedScreen : Screen("downloaded_screen")
+    object ImageViewScreen : Screen("", 0,"imageview_screen")
+
+    object VideosScreen : Screen("Videos", R.drawable.ic_video,"videos_screen")
+
+    object VideoViewScreen : Screen("", 0, "videoview_screen")
 
 }

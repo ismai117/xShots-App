@@ -1,7 +1,8 @@
 package com.im.xshots.di
 
 
-import com.im.xshots.data.remote.service.ImagesService
+import com.im.xshots.data.remote.service.PhotosService
+import com.im.xshots.data.remote.service.VideosService
 import com.squareup.moshi.Moshi
 
 import dagger.Module
@@ -15,6 +16,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
 import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -44,7 +46,8 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideRetrofit(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    @Named("photos")
+    fun providePhotosNetwork(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://pexelsdimasv1.p.rapidapi.com/")
             .addConverterFactory(MoshiConverterFactory.create(moshi))
@@ -54,10 +57,27 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideImagesService(retrofit: Retrofit): ImagesService {
-        return retrofit.create(ImagesService::class.java)
+    fun providePhotosService(@Named("photos") retrofit: Retrofit): PhotosService {
+        return retrofit.create(PhotosService::class.java)
     }
 
+
+    @Singleton
+    @Provides
+    @Named("videos")
+    fun provideVideosNetwork(okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://pexelsdimasv1.p.rapidapi.com/")
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .client(okHttpClient)
+            .build()
+    }
+
+    @Singleton
+    @Provides
+    fun provideVideosService(@Named("videos") retrofit: Retrofit): VideosService {
+        return retrofit.create(VideosService::class.java)
+    }
 
 
 }

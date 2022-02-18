@@ -14,13 +14,13 @@ import java.io.File
 
 
 @SuppressLint("Range")
-fun download(url: String?, context: Context){
+fun downloadVideo(url: String?, context: Context) {
 
     val lastMessage = mutableStateOf("")
 
     val dir = File(Environment.DIRECTORY_PICTURES)
 
-    if(!dir.exists()){
+    if (!dir.exists()) {
         dir.mkdirs()
     }
 
@@ -42,32 +42,34 @@ fun download(url: String?, context: Context){
     }
 
     val downloadId = downloadManager.enqueue(request)
-    val query =  DownloadManager.Query().setFilterById(downloadId)
+
+    val query = DownloadManager.Query().setFilterById(downloadId)
 
     Thread(Runnable {
 
         var isDownloading = true
 
-        while (isDownloading){
+        while (isDownloading) {
+
 
             val cursor: Cursor = downloadManager.query(query)
 
             cursor.moveToFirst()
 
-            if(cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
+            if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
                 isDownloading = false
             }
 
             val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
 
-            val message = statusMessage(status)
+            val message = videosStatusMessage(status)
 
             if (message != lastMessage.value){
 
-                (context as Activity).runOnUiThread {
+                (context as Activity).runOnUiThread{
                     Log.d("status_message", "$message")
                     Toast.makeText(context, "$message", Toast.LENGTH_LONG).show()
-                    lastMessage.value = message ?: ""
+                    lastMessage.value = message
                 }
 
             }
@@ -78,10 +80,9 @@ fun download(url: String?, context: Context){
 
     }).start()
 
-
 }
 
-fun statusMessage(status: Int): String{
+fun videosStatusMessage(status: Int): String {
 
     var msg = ""
 

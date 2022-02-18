@@ -1,31 +1,22 @@
 package com.im.xshots.ui.viewmodel
 
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.im.xshots.model.images.Images
-import com.im.xshots.repository.Repository
+import com.im.xshots.model.photos.Photos
+import com.im.xshots.repository.MainRepository
 import com.im.xshots.ui.util.NetworkState
-import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.lang.Exception
 import javax.inject.Inject
 
 @HiltViewModel
-class SearchViewModel
+class PhotosViewModel
 @Inject
 constructor(
-    private val repository: Repository,
+    private val repository: MainRepository,
 ) : ViewModel() {
 
     private val host = "PexelsdimasV1.p.rapidapi.com"
@@ -35,8 +26,8 @@ constructor(
     private val per_page = "15"
     private val page = "1"
 
-    private val _images: MutableState<NetworkState<List<Images>>?> = mutableStateOf(null)
-    val images: MutableState<NetworkState<List<Images>>?> = _images
+    private val _photos: MutableState<NetworkState<List<Photos>>?> = mutableStateOf(null)
+    val photos: MutableState<NetworkState<List<Photos>>?> = _photos
 
     val query = mutableStateOf("")
 
@@ -51,15 +42,15 @@ constructor(
         }
     }
 
-    fun searchImage(query: String) {
+    fun searchPhotos(query: String) {
 
         viewModelScope.launch {
 
-            _images.value = NetworkState.Loading()
+            _photos.value = NetworkState.Loading()
 
             try {
 
-                val response = repository.getImages(
+                val response = repository.getPhotos(
                     host = host,
                     key = key,
                     auth = auth,
@@ -69,18 +60,17 @@ constructor(
                     page = page
                 )
 
-                _images.value = NetworkState.Success(response)
+                _photos.value = NetworkState.Success(response)
 
             } catch (throwable: Throwable) {
 
-                _images.value = NetworkState.Error(throwable)
+                _photos.value = NetworkState.Error(throwable)
 
             }
 
         }
 
     }
-
 
     fun onQueryChanged(query: String){
         this.query.value = query

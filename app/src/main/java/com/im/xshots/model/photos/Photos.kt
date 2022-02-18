@@ -1,12 +1,14 @@
-package com.im.xshots.model.images
+package com.im.xshots.model.photos
 
+import com.im.xshots.data.remote.photos.ImagesNetworkEntity
 import java.io.Serializable
 
-data class Images(
+data class Photos(
+
+    val id: Int,
     val alt: String,
     val avg_color: String,
     val height: Int,
-    val id: Int,
     val liked: Boolean,
     val photographer: String,
     val photographer_id: Int,
@@ -21,4 +23,5 @@ data class Images(
     val portrait: String,
     val small: String,
     val tiny: String,
+
 ) : Serializable

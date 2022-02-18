@@ -1,13 +1,13 @@
 package com.im.xshots.data.remote.util
 
-import com.im.xshots.data.remote.images.ImagesNetworkEntity
+import com.im.xshots.data.remote.photos.ImagesNetworkEntity
 import com.im.xshots.model.util.EntityMapper
-import com.im.xshots.model.images.Images
+import com.im.xshots.model.photos.Photos
 
-class ImagesResponseMapper : EntityMapper<ImagesNetworkEntity.Photo, Images> {
+class PhotosResponseMapper : EntityMapper<ImagesNetworkEntity, Photos> {
 
-    override fun fromEntity(entity: ImagesNetworkEntity.Photo): Images {
-        return Images(
+    override fun fromEntity(entity: ImagesNetworkEntity): Photos {
+        return Photos(
             alt = entity.alt,
             avg_color = entity.avg_color,
             height = entity.height,
@@ -29,11 +29,11 @@ class ImagesResponseMapper : EntityMapper<ImagesNetworkEntity.Photo, Images> {
         )
     }
 
-    override fun toEntity(model: Images): ImagesNetworkEntity.Photo {
+    override fun toEntity(model: Photos): ImagesNetworkEntity {
         TODO("Not yet implemented")
     }
 
-    fun mapfromEntityList(list: List<ImagesNetworkEntity.Photo>): List<Images> {
+    fun mapfromEntityList(list: List<ImagesNetworkEntity>): List<Photos> {
         return list.map { fromEntity(it) }
     }
 

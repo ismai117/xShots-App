@@ -1,7 +1,8 @@
 package com.im.xshots.di
 
 
-import com.im.xshots.data.remote.util.ImagesResponseMapper
+import com.im.xshots.data.remote.util.PhotosResponseMapper
+import com.im.xshots.data.remote.util.VideosResponseMapper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,10 +16,14 @@ object InteractorsModule {
 
     @Singleton
     @Provides
-    fun provideImagesResponseMapper(): ImagesResponseMapper {
-        return ImagesResponseMapper()
+    fun providePhotosResponseMapper(): PhotosResponseMapper {
+        return PhotosResponseMapper()
     }
 
-
+    @Singleton
+    @Provides
+    fun provideVideosResponseMapper(): VideosResponseMapper {
+        return VideosResponseMapper()
+    }
 
 }
