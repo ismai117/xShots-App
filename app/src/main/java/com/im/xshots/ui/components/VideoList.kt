@@ -37,7 +37,7 @@ fun VideoList(
             VideoCard(
                 videos = video,
                 onClick = {
-                    val encodedUrl = URLEncoder.encode("${video.video_files.get(0).link}", StandardCharsets.UTF_8.toString())
+                    val encodedUrl = URLEncoder.encode("${video.video_files.get(3).link}", StandardCharsets.UTF_8.toString())
                     navController.navigate(Screen.VideoViewScreen.route + "/$encodedUrl")
                 },
                 context = context

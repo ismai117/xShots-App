@@ -14,10 +14,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
 
 
 @Composable
 fun VideoTopBarMenu(
+    scaffold: ScaffoldState,
+    scope: CoroutineScope,
     url: String,
     context: Context,
 ) {
@@ -47,29 +50,28 @@ fun VideoTopBarMenu(
     }
 
     if (save.value) {
-        Toast.makeText(context, "saved", Toast.LENGTH_LONG).show()
-        SaveVideo(url, context)
+        SaveVideo(scaffold, scope, url, context)
         save.value = false
     }
 
 }
 
 @Composable
-fun SaveVideo(url: String, context: Context) {
+fun SaveVideo(scaffold: ScaffoldState, scope: CoroutineScope, url: String, context: Context) {
     if (
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
         Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
     ) {
-        AskPermissionForVideoDownload(url = url, context = context)
+        AskPermissionForVideoDownload(scaffold, scope, url, context)
     }
     else {
-        DownloadVideo(url, context)
+        DownloadVideos(scaffold, scope, url, context)
     }
 }
 
 
 @Composable
-fun AskPermissionForVideoDownload(url: String, context: Context) {
+fun AskPermissionForVideoDownload(scaffold: ScaffoldState, scope: CoroutineScope, url: String, context: Context) {
     if(ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
         if (ActivityCompat.shouldShowRequestPermissionRationale(context as Activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)){
             showDialog(context = context)
@@ -77,14 +79,14 @@ fun AskPermissionForVideoDownload(url: String, context: Context) {
             ActivityCompat.requestPermissions(context, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
         }
     } else{
-        DownloadVideo(url = url, context = context)
+        DownloadVideos(scaffold, scope, url, context)
     }
 }
 
 @Composable
-fun DownloadVideo(url: String, context: Context) {
+fun DownloadVideos(scaffold: ScaffoldState, scope: CoroutineScope, url: String, context: Context) {
 
-    downloadVideo(url, context)
+    DownloadVideo(scaffold, scope, url, context)
 
 }
 

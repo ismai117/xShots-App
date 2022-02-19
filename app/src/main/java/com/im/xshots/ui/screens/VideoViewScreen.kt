@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,23 +17,32 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.im.xshots.ui.components.VideoTopBarMenu
 import com.im.xshots.ui.util.Screen
+import kotlinx.coroutines.CoroutineScope
 
 
 @Composable
 fun VideoViewScreen(
     navController: NavController,
     scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
     url: String?,
     context: Context,
 ) {
@@ -44,16 +54,16 @@ fun VideoViewScreen(
 
         Log.d("videoLink", "$url")
 
+        VideoPlayer(url, context)
+
         Scaffold(
             scaffoldState = scaffoldState,
             topBar = {
-                VideoTopBar(navController, url, context)
+                VideoTopBar(navController, scaffoldState, scope, url, context)
             },
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = Color.Transparent
-        ) {
-            VideoPlayer(url, context)
-        }
+            backgroundColor = Color.Transparent,
+        ) {}
 
     }
 
@@ -62,6 +72,8 @@ fun VideoViewScreen(
 @Composable
 fun VideoTopBar(
     navController: NavController,
+    scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
     url: String?,
     context: Context,
 ) {
@@ -81,10 +93,11 @@ fun VideoTopBar(
             }
         },
         actions = {
-            url?.let { VideoTopBarMenu(url, context) }
+            url?.let { VideoTopBarMenu(scaffoldState, scope, url , context) }
         },
+        modifier = Modifier.fillMaxWidth(),
         backgroundColor = Color.Transparent,
-        modifier = Modifier.fillMaxWidth()
+        contentColor = Color.White
     )
 
 }
@@ -96,7 +109,9 @@ fun VideoPlayer(url: String?, context: Context) {
     val uri = Uri.parse(url)
 
     val exoPlayer = remember(context) {
-        SimpleExoPlayer.Builder(context).build().apply {
+        ExoPlayer.Builder(context)
+            .build().
+            apply {
             val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context,
                 Util.getUserAgent(context, context.packageName))
 
@@ -107,14 +122,15 @@ fun VideoPlayer(url: String?, context: Context) {
         }
     }
 
+    exoPlayer.playWhenReady = true
+    exoPlayer.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+    exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+
     DisposableEffect(
         AndroidView(
-            modifier =
-            Modifier
-                .testTag("VideoPlayer")
-                .fillMaxSize(),
             factory = {
                 PlayerView(context).apply {
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
                     player = exoPlayer
                     layoutParams =
                         FrameLayout.LayoutParams(
@@ -134,3 +150,4 @@ fun VideoPlayer(url: String?, context: Context) {
 
 
 }
+

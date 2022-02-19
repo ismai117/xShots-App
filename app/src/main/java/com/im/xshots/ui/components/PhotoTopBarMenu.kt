@@ -16,9 +16,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
 
 @Composable
 fun PhotoTopBarMenu(
+    scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
     url: String,
     context: Context,
 ) {
@@ -48,7 +51,7 @@ fun PhotoTopBarMenu(
     }
 
     if (save.value) {
-        SaveImage(url, context)
+        SaveImage(scaffoldState, scope, url, context)
         save.value = false
     }
 
@@ -57,19 +60,19 @@ fun PhotoTopBarMenu(
 
 
 @Composable
-fun SaveImage(url: String, context: Context) {
+fun SaveImage(scaffoldState: ScaffoldState, scope: CoroutineScope,url: String, context: Context) {
     if (
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
         Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
     ) {
-        AskPermissionForPhotoDownload(url, context)
+        AskPermissionForPhotoDownload(scaffoldState, scope, url, context)
     } else {
-        DownloadPhoto(url, context)
+        DownloadPhoto(scaffoldState, scope, url, context)
     }
 }
 
 @Composable
-fun AskPermissionForPhotoDownload(url: String, context: Context) {
+fun AskPermissionForPhotoDownload(scaffoldState: ScaffoldState, scope: CoroutineScope,url: String, context: Context) {
 
     if (ContextCompat.checkSelfPermission(context,
             Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
@@ -84,15 +87,15 @@ fun AskPermissionForPhotoDownload(url: String, context: Context) {
                 1)
         }
     } else {
-        DownloadPhoto(url = url, context)
+        DownloadPhoto(scaffoldState, scope, url, context)
     }
 
 }
 
 @SuppressLint("Range")
 @Composable
-fun DownloadPhoto(url: String?, context: Context) {
+fun DownloadPhoto(scaffoldState: ScaffoldState, scope: CoroutineScope,url: String, context: Context) {
 
-    downloadPhoto(url, context)
+    downloadPhoto(scaffoldState, scope, url, context)
 
 }

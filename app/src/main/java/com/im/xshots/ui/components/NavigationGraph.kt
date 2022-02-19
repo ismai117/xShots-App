@@ -54,6 +54,7 @@ fun NavigationGraph(
             PhotoViewScreen(
                 navController = navController,
                 scaffoldState = scaffoldState,
+                scope = scope,
                 url = backStackEntry.arguments?.getString("image"),
                 context = context)
         }
@@ -76,8 +77,9 @@ fun NavigationGraph(
                 bottomNavState.value = false
             }
             VideoViewScreen(
-                scaffoldState = scaffoldState,
                 navController = navController,
+                scaffoldState = scaffoldState,
+                scope = scope,
                 url = backStackEntry.arguments?.getString("video"),
                 context = context
             )

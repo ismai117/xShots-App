@@ -9,14 +9,19 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.material.ScaffoldState
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 
 @SuppressLint("Range")
-fun downloadVideo(url: String?, context: Context) {
+@Composable
+fun DownloadVideo(scaffoldState: ScaffoldState, scope: CoroutineScope, url: String?, context: Context) {
 
-    val lastMessage = mutableStateOf("")
+    val lastMessage = remember { mutableStateOf("") }
 
     val dir = File(Environment.DIRECTORY_PICTURES)
 
@@ -68,7 +73,7 @@ fun downloadVideo(url: String?, context: Context) {
 
                 (context as Activity).runOnUiThread{
                     Log.d("status_message", "$message")
-                    Toast.makeText(context, "$message", Toast.LENGTH_LONG).show()
+                    showsnackbar(scope, scaffoldState  ,message)
                     lastMessage.value = message
                 }
 
@@ -81,6 +86,13 @@ fun downloadVideo(url: String?, context: Context) {
     }).start()
 
 }
+
+fun showsnackbar(scope: CoroutineScope, scaffoldState: ScaffoldState, message: String) {
+    scope.launch {
+        scaffoldState.snackbarHostState.showSnackbar("$message")
+    }
+}
+
 
 fun videosStatusMessage(status: Int): String {
 

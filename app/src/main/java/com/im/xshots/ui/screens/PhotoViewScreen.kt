@@ -2,10 +2,7 @@ package com.im.xshots.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -20,12 +17,14 @@ import com.im.xshots.R
 import com.im.xshots.ui.components.ImageLoader
 import com.im.xshots.ui.components.PhotoTopBarMenu
 import com.im.xshots.ui.util.Screen
+import kotlinx.coroutines.CoroutineScope
 
 
 @Composable
 fun PhotoViewScreen(
     navController: NavController,
     scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
     url: String?,
     context: Context,
 ) {
@@ -34,7 +33,6 @@ fun PhotoViewScreen(
         modifier = Modifier
             .fillMaxSize()
     ) {
-
 
         val imageSelected = url?.let {
             ImageLoader(uri = it,
@@ -54,11 +52,11 @@ fun PhotoViewScreen(
         Scaffold(
             scaffoldState = scaffoldState,
             topBar = {
-                PhotoTopBar(navController, url, context)
+                PhotoTopBar(navController,scaffoldState, scope, url, context)
             },
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = Color.Transparent,
-            contentColor = Color.White
+            contentColor = Color.White,
         ) {}
 
 
@@ -67,29 +65,35 @@ fun PhotoViewScreen(
 }
 
 @Composable
-fun PhotoTopBar(navController: NavController, url: String?, context: Context) {
+fun PhotoTopBar(
+    navController: NavController,
+    scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
+    url: String?,
+    context: Context
+) {
 
-    TopAppBar(
-        title = {
+        TopAppBar(
+            title = {
 
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = {
-                    navController.navigate(Screen.PhotosScreen.route)
+            },
+            navigationIcon = {
+                IconButton(
+                    onClick = {
+                        navController.navigate(Screen.PhotosScreen.route)
+                    }
+                ) {
+                    Icon(Icons.Filled.ArrowBack,
+                        "backIcon",
+                        modifier = Modifier.size(30.dp))
                 }
-            ) {
-                Icon(Icons.Filled.ArrowBack,
-                    "backIcon",
-                    modifier = Modifier.size(30.dp))
-            }
-        },
-        actions = {
-            url?.let { PhotoTopBarMenu(it, context) }
-        },
-        backgroundColor = Color.Transparent,
-        modifier = Modifier.fillMaxWidth()
-    )
+            },
+            actions = {
+                url?.let { PhotoTopBarMenu(scaffoldState, scope, it, context) }
+            },
+            backgroundColor = Color.Transparent,
+            modifier = Modifier.fillMaxWidth()
 
+        )
 
 }

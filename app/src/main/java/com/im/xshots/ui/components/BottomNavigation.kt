@@ -1,12 +1,18 @@
 package com.im.xshots.ui.components
 
+import android.widget.Space
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -17,7 +23,7 @@ import com.im.xshots.ui.util.Screen
 
 
 @Composable
-fun BottomNavigation(
+fun BottomNav(
     navController: NavController,
     bottomNavState: MutableState<Boolean>,
 ) {
@@ -29,29 +35,33 @@ fun BottomNavigation(
     AnimatedVisibility(
         visible = bottomNavState.value
     ) {
-        androidx.compose.material.BottomNavigation(
+
+        BottomNavigation(
             backgroundColor = Color.White,
-            elevation = 8.dp
+            elevation = 12.dp,
         ) {
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentRoute = navBackStackEntry?.destination?.route
+
+            val bottomNavBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = bottomNavBackStackEntry?.destination?.route
+
             items.forEach { item ->
+
                 BottomNavigationItem(
                     icon = {
-                        Icon(painterResource(id = item.icon),
-                            contentDescription = item.title)
+                        Icon(
+                            painter = painterResource(id = item.icon),
+                            contentDescription = item.title
+                        )
                     },
                     label = {
-                        Text(text = item.title,
-                            fontSize = 9.sp)
+                        Text(
+                            text = item.title,
+                            fontSize = 12.sp,
+                        )
                     },
-                    selectedContentColor = Color.Black,
-                    unselectedContentColor = Color.LightGray,
-                    alwaysShowLabel = true,
                     selected = currentRoute == item.route,
                     onClick = {
                         navController.navigate(item.route) {
-
                             navController.graph.startDestinationRoute?.let { screen_route ->
                                 popUpTo(screen_route) {
                                     saveState = true
@@ -60,10 +70,16 @@ fun BottomNavigation(
                             launchSingleTop = true
                             restoreState = true
                         }
-                    }
+                    },
+                    selectedContentColor = Color.Black,
+                    unselectedContentColor = Color.LightGray,
+                    alwaysShowLabel = true,
                 )
+
             }
+
         }
+
     }
 
 }

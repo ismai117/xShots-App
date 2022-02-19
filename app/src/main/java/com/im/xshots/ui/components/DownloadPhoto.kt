@@ -9,12 +9,20 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.material.ScaffoldState
 import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.io.File
 
 
 @SuppressLint("Range")
-fun downloadPhoto(url: String?, context: Context){
+fun downloadPhoto(
+    scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
+    url: String?,
+    context: Context
+){
 
     val lastMessage = mutableStateOf("")
 
@@ -66,7 +74,9 @@ fun downloadPhoto(url: String?, context: Context){
 
                 (context as Activity).runOnUiThread {
                     Log.d("status_message", "$message")
-                    Toast.makeText(context, "$message", Toast.LENGTH_LONG).show()
+                    scope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar("$message")
+                    }
                     lastMessage.value = message ?: ""
                 }
 
