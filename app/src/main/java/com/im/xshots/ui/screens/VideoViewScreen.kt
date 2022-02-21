@@ -110,8 +110,7 @@ fun VideoPlayer(url: String?, context: Context) {
 
     val exoPlayer = remember(context) {
         ExoPlayer.Builder(context)
-            .build().
-            apply {
+            .build().apply {
             val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context,
                 Util.getUserAgent(context, context.packageName))
 

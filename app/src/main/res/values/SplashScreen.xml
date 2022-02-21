@@ -5,7 +5,7 @@
 
         <item name="windowSplashScreenBackground">#ffffff</item>
 
-        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_bg_xshots</item>
 
         <item name="windowSplashScreenIconBackgroundColor">#ffffff</item>
 

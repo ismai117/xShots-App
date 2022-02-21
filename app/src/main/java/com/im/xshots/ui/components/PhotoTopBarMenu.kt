@@ -2,21 +2,24 @@ package com.im.xshots.ui.components
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun PhotoTopBarMenu(
@@ -51,51 +54,106 @@ fun PhotoTopBarMenu(
     }
 
     if (save.value) {
-        SaveImage(scaffoldState, scope, url, context)
+        SavePhoto(scaffoldState, scope, url, context)
         save.value = false
     }
 
 }
 
-
-
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun SaveImage(scaffoldState: ScaffoldState, scope: CoroutineScope,url: String, context: Context) {
-    if (
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
-    ) {
-        AskPermissionForPhotoDownload(scaffoldState, scope, url, context)
-    } else {
-        DownloadPhoto(scaffoldState, scope, url, context)
-    }
-}
+fun SavePhoto(scaffoldState: ScaffoldState, scope: CoroutineScope, url: String, context: Context) {
 
-@Composable
-fun AskPermissionForPhotoDownload(scaffoldState: ScaffoldState, scope: CoroutineScope,url: String, context: Context) {
+    val permissionsState =
+        rememberPermissionState(permission = Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
-    if (ContextCompat.checkSelfPermission(context,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
-    ) {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(context as Activity,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        ) {
-            showDialog(context = context)
-        } else {
-            ActivityCompat.requestPermissions(context,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                1)
+    val lifeCycle = LocalLifecycleOwner.current
+
+    DisposableEffect(
+        key1 = lifeCycle,
+        effect = {
+
+            val observer = LifecycleEventObserver { _, event ->
+
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    permissionsState.launchPermissionRequest()
+                }
+
+            }
+
+            lifeCycle.lifecycle.addObserver(observer)
+
+            onDispose {
+                lifeCycle.lifecycle.removeObserver(observer)
+            }
+
         }
-    } else {
-        DownloadPhoto(scaffoldState, scope, url, context)
+    )
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        when (permissionsState.permission) {
+
+            Manifest.permission.WRITE_EXTERNAL_STORAGE -> {
+
+                when {
+
+                    permissionsState.hasPermission -> {
+
+
+                        DownloadPhoto(scaffoldState, scope, url, context)
+
+                    }
+
+                    permissionsState.shouldShowRationale -> {
+
+                        LaunchedEffect(scope) {
+
+                            scope.launch {
+                                scaffoldState.snackbarHostState.showSnackbar("External storage permission is needed to save photo.")
+                            }
+
+                        }
+
+                    }
+
+                    !permissionsState.hasPermission && !permissionsState.shouldShowRationale -> {
+
+                        LaunchedEffect(scope) {
+
+                            scope.launch {
+                                scaffoldState.snackbarHostState.showSnackbar("External storage permission was permanently denied. Go to app settings and enable permission.")
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 
 }
+
 
 @SuppressLint("Range")
 @Composable
-fun DownloadPhoto(scaffoldState: ScaffoldState, scope: CoroutineScope,url: String, context: Context) {
+fun DownloadPhoto(
+    scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
+    url: String,
+    context: Context,
+) {
 
     downloadPhoto(scaffoldState, scope, url, context)
 
 }
+
