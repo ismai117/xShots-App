@@ -12,14 +12,14 @@ import com.bumptech.glide.request.transition.Transition
 
 @Composable
 fun ImageLoader(
-    uri: String,
+    url: String,
     @DrawableRes resource: Int,
     context: Context
 ): MutableState<Bitmap?>{
 
     val imageState: MutableState<Bitmap?> = remember { mutableStateOf(null) }
 
-    LaunchedEffect(uri){
+    LaunchedEffect(url){
 
     Glide.with(context).asBitmap().load(resource).into(object : CustomTarget<Bitmap>(){
 
@@ -35,7 +35,7 @@ fun ImageLoader(
 
 
 
-    Glide.with(context).asBitmap().load(uri).into(object : CustomTarget<Bitmap>(){
+    Glide.with(context).asBitmap().load(url).into(object : CustomTarget<Bitmap>(){
 
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
             imageState.value = resource

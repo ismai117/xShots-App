@@ -3,7 +3,9 @@ package com.im.xshots.ui.components
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.IntentFilter
 import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
@@ -11,6 +13,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.material.ScaffoldState
 import androidx.compose.runtime.mutableStateOf
+import com.im.xshots.ui.service.DownloadBroadcast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -24,6 +27,7 @@ fun downloadPhoto(
     context: Context
 ){
 
+//    val dbr: BroadcastReceiver = DownloadBroadcast()
     val lastMessage = mutableStateOf("")
 
     val dir = File(Environment.DIRECTORY_PICTURES)
@@ -52,6 +56,8 @@ fun downloadPhoto(
     val downloadId = downloadManager.enqueue(request)
     val query =  DownloadManager.Query().setFilterById(downloadId)
 
+    
+
     Thread(Runnable {
 
         var isDownloading = true
@@ -63,7 +69,15 @@ fun downloadPhoto(
             cursor.moveToFirst()
 
             if(cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
+
                 isDownloading = false
+
+                (context as Activity).runOnUiThread {
+                    scope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar("Download status is successful")
+                    }
+                }
+
             }
 
             val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
@@ -74,9 +88,6 @@ fun downloadPhoto(
 
                 (context as Activity).runOnUiThread {
                     Log.d("status_message", "$message")
-                    scope.launch {
-                        scaffoldState.snackbarHostState.showSnackbar("$message")
-                    }
                     lastMessage.value = message ?: ""
                 }
 

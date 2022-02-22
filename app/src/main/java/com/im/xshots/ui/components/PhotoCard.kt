@@ -33,7 +33,7 @@ fun PhotoCard(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            val image = ImageLoader(uri = photos.portrait,
+            val image = ImageLoader(url = photos.portrait,
                 resource = R.drawable.placeholder,
                 context = context)
             image.value?.asImageBitmap()?.let {

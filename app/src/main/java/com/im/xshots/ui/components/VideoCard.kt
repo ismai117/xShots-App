@@ -34,7 +34,7 @@ fun VideoCard(
             modifier = Modifier.fillMaxSize()
         ) {
             val videoImage =
-                videos.image?.let { ImageLoader(uri = it, resource = R.drawable.placeholder, context = context).value }
+                videos.image?.let { ImageLoader(url = it, resource = R.drawable.placeholder, context = context).value }
             videoImage?.let {
                 Image(
                     bitmap = it.asImageBitmap(),

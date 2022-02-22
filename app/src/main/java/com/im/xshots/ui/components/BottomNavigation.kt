@@ -33,7 +33,8 @@ fun BottomNav(
     )
 
     AnimatedVisibility(
-        visible = bottomNavState.value
+        visible = bottomNavState.value,
+
     ) {
 
         BottomNavigation(

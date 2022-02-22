@@ -35,7 +35,7 @@ fun PhotoViewScreen(
     ) {
 
         val imageSelected = url?.let {
-            ImageLoader(uri = it,
+            ImageLoader(url = it,
                 resource = R.drawable.placeholder,
                 context = context).value
         }

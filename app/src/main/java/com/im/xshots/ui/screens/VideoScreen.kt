@@ -106,7 +106,9 @@ fun VideosScreen(
                     ),
                     colors = TextFieldDefaults.textFieldColors(
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedLabelColor = Color.Black,
+                        cursorColor = Color.Black
                     ),
                     maxLines = 1,
                     singleLine = true
