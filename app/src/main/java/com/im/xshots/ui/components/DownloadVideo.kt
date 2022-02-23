@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
+import com.im.xshots.ui.service.DownloadBroadcast.Companion.id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -47,8 +48,9 @@ fun DownloadVideo(scaffoldState: ScaffoldState, scope: CoroutineScope, url: Stri
     }
 
     val downloadId = downloadManager.enqueue(request)
-
     val query = DownloadManager.Query().setFilterById(downloadId)
+
+    id = downloadId
 
     Thread(Runnable {
 
@@ -62,7 +64,15 @@ fun DownloadVideo(scaffoldState: ScaffoldState, scope: CoroutineScope, url: Stri
             cursor.moveToFirst()
 
             if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL){
+
                 isDownloading = false
+
+                (context as Activity).runOnUiThread {
+                    scope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar("Download status is successful")
+                    }
+                }
+
             }
 
             val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
@@ -73,7 +83,6 @@ fun DownloadVideo(scaffoldState: ScaffoldState, scope: CoroutineScope, url: Stri
 
                 (context as Activity).runOnUiThread{
                     Log.d("status_message", "$message")
-                    showsnackbar(scope, scaffoldState  ,message)
                     lastMessage.value = message
                 }
 

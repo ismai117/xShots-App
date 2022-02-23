@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.compose.material.ScaffoldState
 import androidx.compose.runtime.mutableStateOf
 import com.im.xshots.ui.service.DownloadBroadcast
+import com.im.xshots.ui.service.DownloadBroadcast.Companion.id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -27,7 +28,7 @@ fun downloadPhoto(
     context: Context
 ){
 
-//    val dbr: BroadcastReceiver = DownloadBroadcast()
+
     val lastMessage = mutableStateOf("")
 
     val dir = File(Environment.DIRECTORY_PICTURES)
@@ -56,7 +57,10 @@ fun downloadPhoto(
     val downloadId = downloadManager.enqueue(request)
     val query =  DownloadManager.Query().setFilterById(downloadId)
 
-    
+
+    // broadcastReceiver downloadid
+
+    id = downloadId
 
     Thread(Runnable {
 
@@ -98,6 +102,11 @@ fun downloadPhoto(
         }
 
     }).start()
+
+
+
+
+
 
 
 }

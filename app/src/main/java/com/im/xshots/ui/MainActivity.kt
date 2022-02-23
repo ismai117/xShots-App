@@ -1,7 +1,10 @@
 package com.im.xshots.ui
 
 import android.Manifest
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.IntentFilter
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.im.xshots.ui.components.*
+import com.im.xshots.ui.service.DownloadBroadcast
 import com.im.xshots.ui.viewmodel.PhotosViewModel
 import com.im.xshots.ui.viewmodel.VideosViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,7 +39,7 @@ class MainActivity : ComponentActivity() {
 
     private val photosModel: PhotosViewModel by viewModels()
     private val videosModel: VideosViewModel by viewModels()
-
+    val dbr: BroadcastReceiver = DownloadBroadcast()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,6 +100,16 @@ class MainActivity : ComponentActivity() {
 
     }
 
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(dbr, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(dbr)
+    }
 
 
 
